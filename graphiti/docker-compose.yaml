@@ -1,0 +1,63 @@
+services:
+  neo4j:
+    container_name: neo4j
+    image: neo4j:5-community
+    restart: unless-stopped
+    network_mode: service:neo4j-on-advin
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+      - neo4j-import:/var/lib/neo4j/import
+      - neo4j-plugins:/plugins
+    env_file:
+      - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  graphiti:
+    container_name: graphiti
+    image: graphiti/graphiti:latest  # Adjust image name as needed
+    restart: unless-stopped
+    network_mode: service:neo4j-on-advin
+    depends_on:
+      - neo4j
+    env_file:
+      - .env
+    volumes:
+      - graphiti-data:/app/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  neo4j-on-advin:
+    image: tailscale/tailscale:latest
+    hostname: neo4j-on-advin
+    environment:
+      - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+    volumes:
+      - ${PWD}/tailscale-neo4j/state:/var/lib/tailscale
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+    restart: unless-stopped
+    secrets:
+      - tsauthkey
+
+secrets:
+  tsauthkey:
+    file: ~/.config/tsauthkey
+
+volumes:
+  neo4j-data:
+  neo4j-logs:
+  neo4j-import:
+  neo4j-plugins:
+  graphiti-data:

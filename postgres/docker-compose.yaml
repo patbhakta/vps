@@ -3,20 +3,20 @@ services:
     image: postgres:latest
     restart: always
     # set shared memory limit when using docker compose
-    shm_size: 128mb
+    shm_size: 512mb
     volumes:
       - type: tmpfs
         target: /dev/shm
         tmpfs:
-          size: 134217728 # 128*2^20 bytes = 128Mb
+          size: 536870912 # 512*2^20 bytes = 512Mb
       - ./postgres-data:/var/lib/postgresql/data
     env_file:
       - .env
-    network_mode: service:pg-on-hstgr
+    network_mode: service:pg-on-advin
 
-  pg-on-hstgr:
+  pg-on-advin:
     image: tailscale/tailscale:latest
-    hostname: pg-on-hstgr
+    hostname: pg-on-advin
     environment:
       - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
       - TS_STATE_DIR=/var/lib/tailscale

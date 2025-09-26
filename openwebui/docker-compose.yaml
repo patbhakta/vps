@@ -7,11 +7,11 @@ services:
     env_file:
       - .env
     restart: unless-stopped
-    network_mode: service:openwebui-on-hstgr
+    network_mode: service:openwebui-on-advin
 
-  openwebui-on-hstgr:
+  openwebui-on-advin:
       image: tailscale/tailscale:latest
-      hostname: openwebui-on-hstgr
+      hostname: openwebui-on-advin
       environment:
         - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
         - TS_STATE_DIR=/var/lib/tailscale

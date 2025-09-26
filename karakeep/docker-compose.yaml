@@ -10,7 +10,7 @@ services:
       MEILI_ADDR: http://meilisearch:7700
       BROWSER_WEB_URL: http://chrome:9222
       DATA_DIR: /data
-    network_mode: service:karakeep-on-hstgr
+    network_mode: service:karakeep-on-advin
   chrome:
     image: gcr.io/zenika-hub/alpine-chrome:124
     restart: unless-stopped
@@ -30,9 +30,9 @@ services:
       MEILI_NO_ANALYTICS: "true"
     volumes:
       - meilisearch:/meili_data
-  karakeep-on-hstgr:
+  karakeep-on-advin:
     image: tailscale/tailscale:latest
-    hostname: karakeep-on-hstgr
+    hostname: karakeep-on-advin
     environment:
       - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
       - TS_STATE_DIR=/var/lib/tailscale

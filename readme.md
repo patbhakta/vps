@@ -1,6 +1,6 @@
 # Note: I removed the original version of the caddy setup, in favor of what used to be caddy2. The original Caddy is still in caddy-orig.
 
-This is a collection of docker-compose files for my home lab. There will be a video added for each service over time. I will be using Hostinger for all hosting. Visit [Hostinger](https://hostinger.com/mattw) for more information. If you sign up for anything there, use coupon code `mattw` for 10% off.
+This is a collection of docker-compose files for VPS.
 
 ## Services
 
@@ -12,22 +12,18 @@ This is a collection of docker-compose files for my home lab. There will be a vi
 - redis
 - caddy
 - watchtower
+- qdrant
+- neo4j / graphiti
 
 ## Goals
 
-I want to have a home lab that is self-hosted and runs on docker. I want to be able to access all of the services from the internet. But I don't want to let anyone access them...just me. n8n will be publicly accessible, but require authentication. The main thing that allows for this is Tailscale, which has a free plan that will let us do all we need.
+I want to have a VPS that is self-hosted and runs on docker. I want to be able to access all of the services from the internet. But I don't want to let anyone access them...just me. n8n will be publicly accessible, but require authentication. The main thing that allows for this is Tailscale, which has a free plan that will let us do all we need.
 
 ## Video
 
-This first section is covered in a video on my channel, sponsored by [Hostinger](https://hostinger.com/mattw). 
-
 [![Zero to MCP](http://img.youtube.com/vi/OmWJPJ1CR7M/0.jpg)](http://www.youtube.com/watch?v=OmWJPJ1CR7M "Zero to MCP")
 
-## Hostinger
-
-If you want to follow along with everything I am doing, you can sign up for a Hostinger account at [Hostinger](https://hostinger.com/mattw) and use the coupon code `mattw` for 10% off. Select the KVM2 plan. You can choose any template you like, but I am going to start with just the Docker install. Once it is setup, either use the web terminal interface or ssh into the root user. You should see a `ssh root@ipaddress` command. Copy that and run it on your local machine. Enter the password you specified when you created the account. 
-
-Run `git clone https://github.com/technovangelist/homelab.git` to clone this repo. cd into the homelab directory and run `./prep.sh` to prepare the system. Optionally review prep.sh first to see what it does.
+Run `git clone https://github.com/patbhakta/vps.git` to clone this repo. cd into the homelab directory and run `./prep.sh` to prepare the system. Optionally review prep.sh first to see what it does.
 
 Prep.sh will ask for 3 things: 
 
@@ -76,11 +72,11 @@ After its installed, you need a key to add your docker containers to the tailnet
 
 ## n8n
 
-1. Navigate into the n8n directory: `cd homelab/n8n`
+1. Navigate into the n8n directory: `cd vps/n8n`
 2. Review the .env file created by prep.sh
 
    a. `N8N_HOST` should be the hostname of your server.
-   b.  `WEBHOOK_URL` should be the URL of your server.
+   b. `WEBHOOK_URL` should be the URL of your server.
    c. `GENERIC_TIMEZONE` should be your timezone. You'll need to update this.
 
 4.  Start the n8n container: `docker compose up -d`
@@ -107,12 +103,12 @@ Finally run `docker compose up -d`. This takes a bit to run. It is building a ne
 
 This will update all the containers to the latest version every day at 4am
 
-1. Navigate into the watchtower directory: `cd ~/homelab/watchtower`
+1. Navigate into the watchtower directory: `cd ~/vps/watchtower`
 2. Edit the .env file and change the `TZ` to where ever you are. 
 3. Start the watchtower container: `docker compose up -d`
 
 ## Karakeep
 
-Hopefully you have added the Tailscale app to your local machine, or wherever you have Ollama installed. You will need to edit ~/homelab/karakeep/.env` ane change OLLAMA_BASE_URL to that machine with port 11434. Then make sure you have gemma3:12b, llava, and embeddinggemma:latest models pulled. 
+Hopefully you have added the Tailscale app to your local machine, or wherever you have Ollama installed. You will need to edit ~/vps/karakeep/.env` and change OLLAMA_BASE_URL to that machine with port 11434. Then make sure you have gemma3:12b, llava, and embeddinggemma:latest models pulled. 
 
 Then run `docker compose up -d`

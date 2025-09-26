@@ -1,27 +1,28 @@
 services:
-  redis:
-    container_name: redis
-    image: docker.io/valkey/valkey:8-alpine
-    command: valkey-server --save 30 1 --loglevel warning
+  qdrant:
+    container_name: qdrant
+    image: qdrant/qdrant:latest
     restart: unless-stopped
-    network_mode: service:redis-on-advin
+    network_mode: service:qdrant-on-advin
     volumes:
-      - valkey-data2:/data
+      - qdrant-storage:/qdrant/storage
+      - qdrant-snapshots:/qdrant/snapshots
+      - ./config.yaml:/qdrant/config/production.yaml
     logging:
       driver: "json-file"
       options:
-        max-size: "5m"
-        max-file: "1"
-  
-  redis-on-advin:
+        max-size: "10m"
+        max-file: "3"
+
+  qdrant-on-advin:
     image: tailscale/tailscale:latest
-    hostname: redis-on-advin
+    hostname: qdrant-on-advin
     environment:
       - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_USERSPACE=false
     volumes:
-      - ${PWD}/tailscale-state:/var/lib/tailscale
+      - ${PWD}/tailscale-qdrant/state:/var/lib/tailscale
     devices:
       - /dev/net/tun:/dev/net/tun
     cap_add:
@@ -35,4 +36,5 @@ secrets:
     file: ~/.config/tsauthkey
 
 volumes:
-  valkey-data2:
+  qdrant-storage:
+  qdrant-snapshots:

@@ -10,11 +10,11 @@ services:
     volumes:
       - n8n_storage:/home/node/.n8n
       - ./local_files:/files
-    network_mode: service:n8n-on-hstgr
+    network_mode: service:n8n-on-advin
 
-  n8n-on-hstgr:
+  n8n-on-advin:
     image: tailscale/tailscale:latest
-    hostname: n8n-on-hstgr
+    hostname: n8n-on-advin
     ports:
       - 5678:5678
     environment:

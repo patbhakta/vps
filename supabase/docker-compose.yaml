@@ -1,0 +1,231 @@
+services:
+  # Supabase Studio
+  studio:
+    container_name: supabase-studio
+    image: supabase/studio:20231123-72ff93b
+    restart: unless-stopped
+    network_mode: service:supabase-on-advin
+    env_file:
+      - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # Kong API Gateway
+  kong:
+    container_name: supabase-kong
+    image: kong:2.8.1
+    restart: unless-stopped
+    network_mode: service:supabase-on-advin
+    env_file:
+      - .env
+    depends_on:
+      - db
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # Authentication
+  auth:
+    container_name: supabase-auth
+    image: supabase/gotrue:v2.132.3
+    restart: unless-stopped
+    network_mode: service:supabase-on-advin
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # REST API
+  rest:
+    container_name: supabase-rest
+    image: postgrest/postgrest:v11.2.2
+    restart: unless-stopped
+    network_mode: service:supabase-on-advin
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # Realtime
+  realtime:
+    container_name: supabase-realtime
+    image: supabase/realtime:v2.25.50
+    restart: unless-stopped
+    network_mode: service:supabase-on-advin
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # Storage
+  storage:
+    container_name: supabase-storage
+    image: supabase/storage-api:v0.43.11
+    restart: unless-stopped
+    network_mode: service:supabase-on-advin
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    volumes:
+      - storage-data:/var/lib/storage
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # Image Proxy
+  imgproxy:
+    container_name: supabase-imgproxy
+    image: darthsim/imgproxy:v3.8.0
+    restart: unless-stopped
+    network_mode: service:supabase-on-advin
+    env_file:
+      - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # Meta (pg_graphql)
+  meta:
+    container_name: supabase-meta
+    image: supabase/postgres-meta:v0.75.0
+    restart: unless-stopped
+    network_mode: service:supabase-on-advin
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # Edge Functions
+  functions:
+    container_name: supabase-edge-functions
+    image: supabase/edge-runtime:v1.32.3
+    restart: unless-stopped
+    network_mode: service:supabase-on-advin
+    env_file:
+      - .env
+    volumes:
+      - functions:/home/deno/functions
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # Analytics
+  logflare:
+    container_name: supabase-analytics
+    image: supabase/logflare:1.4.0
+    restart: unless-stopped
+    network_mode: service:supabase-on-advin
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # Vector/Embeddings
+  vector:
+    container_name: supabase-vector
+    image: timberio/vector:0.28.1-alpine
+    restart: unless-stopped
+    network_mode: service:supabase-on-advin
+    volumes:
+      - ./volumes/logs/vector.yml:/etc/vector/vector.yml:ro
+      - logs:/var/log
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # Database
+  db:
+    container_name: supabase-db
+    image: supabase/postgres:15.1.0.117
+    restart: unless-stopped
+    network_mode: service:supabase-on-advin
+    env_file:
+      - .env
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./volumes/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
+      - ./volumes/db/webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql:Z
+      - ./volumes/db/roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:Z
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Tailscale Network
+  supabase-on-advin:
+    image: tailscale/tailscale:latest
+    hostname: supabase-on-advin
+    environment:
+      - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+    volumes:
+      - ${PWD}/tailscale-supabase/state:/var/lib/tailscale
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+    restart: unless-stopped
+    secrets:
+      - tsauthkey
+
+secrets:
+  tsauthkey:
+    file: ~/.config/tsauthkey
+
+volumes:
+  db-data:
+  storage-data:
+  functions:
+  logs:
