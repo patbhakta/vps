@@ -12,7 +12,8 @@ services:
       - ./postgres-data:/var/lib/postgresql/data
     env_file:
       - .env
-    network_mode: service:pg-on-advin
+    networks:
+      - vps-network
 
   pg-on-advin:
     image: tailscale/tailscale:latest
@@ -30,8 +31,14 @@ services:
     restart: unless-stopped
     secrets:
       - tsauthkey
+    networks:
+      - vps-network
 
 secrets:
   tsauthkey:
     file: ~/.config/tsauthkey
 
+networks:
+  vps-network:
+    name: vps-network
+    external: true
