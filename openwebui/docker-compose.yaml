@@ -7,7 +7,8 @@ services:
     env_file:
       - .env
     restart: unless-stopped
-    network_mode: service:openwebui-on-advin
+    networks:
+      - vps-network
 
   openwebui-on-advin:
       image: tailscale/tailscale:latest
@@ -25,6 +26,8 @@ services:
       restart: unless-stopped
       secrets:
         - tsauthkey
+      networks:
+        - vps-network
 
 secrets:
   tsauthkey:
@@ -32,3 +35,8 @@ secrets:
 
 volumes:
   open-webui:
+
+networks:
+  vps-network:
+    name: vps-network
+    external: true

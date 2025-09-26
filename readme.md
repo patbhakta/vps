@@ -112,3 +112,57 @@ This will update all the containers to the latest version every day at 4am
 Hopefully you have added the Tailscale app to your local machine, or wherever you have Ollama installed. You will need to edit ~/vps/karakeep/.env` and change OLLAMA_BASE_URL to that machine with port 11434. Then make sure you have gemma3:12b, llava, and embeddinggemma:latest models pulled. 
 
 Then run `docker compose up -d`
+
+## Troubleshooting and Verification
+
+After setting up the services, it's important to verify that everything is running correctly. Here are some steps to help you troubleshoot and test the deployment:
+
+### 1. Check Container Status
+
+To ensure all Docker containers are running, you can list them with the following command:
+
+```bash
+docker ps -a
+```
+
+Look for the `STATUS` column to see if the containers are `Up` or have exited. If a container is not running, you can check its logs for errors.
+
+### 2. Inspect Container Logs
+
+To view the logs for a specific service, use the `docker logs` command. For example, to check the logs for the `n8n` container, you would run:
+
+```bash
+docker logs n8n
+```
+
+Replace `n8n` with the name of the container you want to inspect. This is useful for debugging any issues with a specific service.
+
+### 3. Verify Network Connectivity
+
+All services are connected to a shared Docker network called `vps-network`. This allows them to communicate with each other. To verify that the network is set up correctly, you can inspect it with the following command:
+
+```bash
+docker network inspect vps-network
+```
+
+This will show you a list of all containers connected to the network. You should see Caddy and the other services you have started.
+
+### 4. Test Service Communication
+
+You can test if services can communicate with each other by executing a `ping` command from within a container. For example, to test if Caddy can reach `n8n`, you can run the following:
+
+```bash
+docker exec caddy ping n8n -c 4
+```
+
+If the ping is successful, it means the services can communicate over the shared network.
+
+### 5. Check Caddy's Configuration
+
+Caddy acts as a reverse proxy for the other services. You can check its logs to see if it's correctly routing traffic:
+
+```bash
+docker logs caddy
+```
+
+Look for any error messages related to your domain or the services it's trying to proxy to.
