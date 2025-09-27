@@ -23,81 +23,97 @@ I want to have a VPS that is self-hosted and runs on docker. I want to be able t
 
 [![Zero to MCP](http://img.youtube.com/vi/OmWJPJ1CR7M/0.jpg)](http://www.youtube.com/watch?v=OmWJPJ1CR7M "Zero to MCP")
 
-Run `git clone https://github.com/patbhakta/vps.git` to clone this repo. cd into the homelab directory and run `./prep.sh` to prepare the system. Optionally review prep.sh first to see what it does.
+## Initial Server Setup
 
-Prep.sh will ask for 3 things: 
+This section guides you through preparing your VPS, creating a secure user, and configuring your environment.
 
-1. A username you want to login as (it's better if you don't use root)
-2. The password for that user
-3. The domain name you want to use (that you already own). For instance, I have tvl.st and want a n8n server to be reached at n.tvl.st, so here I enter tvl.st and press enter. 
+### 1. Clone the Repository
 
-After running the script, you will need to log out. Before logging back in, let's edit your ssh config file to make it easier to connect. Think of the name you would like to use to connect. I use hstgr throughout the videos, so I will use that. If you don't have a config file, create one at `~/.ssh/config`. You want at least this entry:
+First, log into your new VPS as `root` and clone this repository:
 
-```
-Host hstgr
-    HostName ipaddress
-    User theusernameyoucreated
-    IdentityFile ~/.ssh/thekeyyoucreatedintheinstall
+```bash
+git clone https://github.com/patbhakta/vps.git
 ```
 
-Save that. Then you can run `ssh hstgr` to connect to your server. 
+### 2. Run the Preparation Script
 
-### Hostinger Firewall
+Navigate into the cloned directory and run the `prep.sh` script. This script will automate the setup process.
 
-Now that you are in, lets go to the [Hostinger HPanel](https://hpanel.hostinger.com). Click **Manage** next to the VPS you created.  Under the panel with the stats for your VPS, click **Firewall**. Click the add firewall button and give it a name. Click the 3 dots and choose Edit. You want a rule that drops everything, then add a rule to accept HTTPS, and another to accept SSH. Set the source for all of them to be Any. Then make sure that firewall is enabled. 
+```bash
+cd vps
+./prep.sh
+```
 
-## Tailscale
+The script will prompt you for the following information:
 
-Then you need to get a Tailscale account and add you home machine to your tailnet. You can do this by downloading the Tailscale app from the [Tailscale website](https://tailscale.com/).
+1.  **New Username:** A username for the non-root user you will use to manage the server.
+2.  **Password:** A password for this new user.
+3.  **Domain Name:** The domain name you own and will use for your services (e.g., `example.com`).
+4.  **Tailscale Auth Key:** A [Tailscale Auth Key](https://tailscale.com/kb/1085/auth-keys/) to automatically add your services to your tailnet. Make sure to generate a **reusable** key.
 
-### Create TSAUTHKEY
+After the script finishes, it will move the `vps` directory to `/home/<your-new-username>/vps`.
 
-After its installed, you need a key to add your docker containers to the tailnet. I found the easiest way to do it is to add the key to a docker secret.
+### 3. Reconnect as the New User
 
-1.  Create a folder called `~/.config` on the home directory for the user you are logged in as. 
-2.  Create a file called `tsauthkey` in the `~/.config` folder.
-3.  Go to the tailscale admin page, click on Settings. On the left go to Keys. Click the button `Generate auth key...`.
-4.  Enable `Reusable`. Click `Generate key`.
-5.  Add the key to the `tsauthkey` file.
-6.  Make the file only readable by the user: `chmod 600 ~/.config/tsauthkey`
+Log out of the `root` account and log back in as the new user you just created. For easier access, you can add an entry to your local `~/.ssh/config` file:
 
-### Install Tailscale on server
+```
+Host myvps
+    HostName <your-vps-ip-address>
+    User <your-new-username>
+    IdentityFile ~/.ssh/your_ssh_key
+```
 
-1.  Go to Machines 
-2.  Click Add Device and choose Linux Server.
-3.  Click Generate Install Script.
-4.  Copy the script and run on your VPS. 
-5.  Run `sudo tailscale up`
+### 4. Configure Firewall
 
+It is highly recommended to configure a firewall. If you are using Hostinger, follow these steps:
 
-## n8n
+1.  Go to the [Hostinger HPanel](https://hpanel.hostinger.com) and manage your VPS.
+2.  Click **Firewall** and create a new firewall configuration.
+3.  Add rules to **ACCEPT** traffic for `SSH` and `HTTPS` from any source.
+4.  Add a final rule to **DROP** all other incoming traffic.
+5.  Ensure the firewall is enabled.
 
-1. Navigate into the n8n directory: `cd vps/n8n`
-2. Review the .env file created by prep.sh
+### 5. Install Tailscale on the Server
 
-   a. `N8N_HOST` should be the hostname of your server.
-   b. `WEBHOOK_URL` should be the URL of your server.
-   c. `GENERIC_TIMEZONE` should be your timezone. You'll need to update this.
+To complete the Tailscale setup, run the following command on your VPS:
 
-4.  Start the n8n container: `docker compose up -d`
+```bash
+sudo tailscale up
+```
 
-## Caddy
+## Starting the Services
 
-1. Navigate to the caddy directory: `cd ~/homelab/caddy`
-2. prep.sh copied Caddyfile.example to Caddyfile and updated all the hostnames using your domain.
-3. Edit the .env file and add your Cloudflare API Token. If you are not using Cloudflare for your domain's DNS, you have some research to do.
+All services are managed with Docker Compose. After completing the initial setup, you can start them from the `~/vps` directory.
 
-To get the Cloudflare API token:
+### Caddy (Reverse Proxy)
 
-1. Login to the Cloudflare dashboard
-2. In the left sidebar, click Manage Account.
-3. Click Account API Tokens.
-4. Create a new token.
-    a. Permissions should be Zone, Zone, Edit, and Zone, DNS, Edit. 
-    b. Update Zone Resources to point to the domain used in prep.sh
-5. When it shows you the token, copy it and paste it into the .env file.
+Caddy manages SSL and routes traffic to your services. Before starting it, you need to add your Cloudflare API token to its configuration.
 
-Finally run `docker compose up -d`. This takes a bit to run. It is building a new version of Caddy with support for Cloudflare.
+1.  **Get a Cloudflare API Token:**
+    *   Log in to the Cloudflare dashboard.
+    *   Go to **My Profile > API Tokens** and create a new token.
+    *   Use the **Edit zone DNS** template.
+    *   Set the **Zone Resources** to include the domain you are using.
+    *   Copy the generated token.
+
+2.  **Configure Caddy:**
+    *   Open the Caddy `.env` file: `nano ~/vps/caddy/.env`
+    *   Paste your Cloudflare API token into the `CLOUDFLARE_API_TOKEN` field.
+
+3.  **Start Caddy:**
+    *   Navigate to the Caddy directory: `cd ~/vps/caddy`
+    *   Run `docker compose up -d`. The first run will take some time as it builds a custom Caddy image with the Cloudflare DNS provider.
+
+### n8n (Automation)
+
+1.  Navigate to the n8n directory: `cd ~/vps/n8n`
+2.  Review the `.env` file and adjust the `GENERIC_TIMEZONE` to your local timezone.
+3.  Start the n8n container: `docker compose up -d`
+
+### Other Services
+
+All other services (`searxng`, `karakeep`, `openwebui`, etc.) can be started by navigating to their respective directories within `~/vps` and running `docker compose up -d`.
 
 ## Watchtower
 
