@@ -1,0 +1,37 @@
+{
+    ocsp_stapling off
+}
+
+n8n.bhakta.us {
+	reverse_proxy n8n-on-advin:5678
+}
+
+search.bhakta.us {
+    reverse_proxy searxng-on-advin:8080
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+    }
+}
+
+keep.bhakta.us {
+    reverse_proxy karakeep-on-advin:3000
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+    }
+}
+
+pages.bhakta.us {
+  tls {
+    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+  }
+  header {
+    Access-Control-Allow-Origin *
+    Access-Control-Allow-Credentials true
+    Access-Control-Allow-Methods *
+    Access-Control-Allow-Headers *
+    defer
+  }
+
+  root * /webpages
+  file_server browse
+}
