@@ -10,13 +10,12 @@ services:
     volumes:
       - n8n_storage:/home/node/.n8n
       - ./local_files:/files
-    network_mode: service:n8n-on-advin
+    networks:
+      - vps-network
 
   n8n-on-advin:
     image: tailscale/tailscale:latest
     hostname: n8n-on-advin
-    ports:
-      - 5678:5678
     environment:
       - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
       - TS_STATE_DIR=/var/lib/tailscale
@@ -30,9 +29,14 @@ services:
     restart: unless-stopped
     secrets:
       - tsauthkey
+    networks:
+      - vps-network
 
 secrets:
   tsauthkey:
     file: ~/.config/tsauthkey
 
-    
+networks:
+  vps-network:
+    name: vps-network
+    external: true

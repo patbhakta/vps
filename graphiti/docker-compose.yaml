@@ -3,7 +3,6 @@ services:
     container_name: neo4j
     image: neo4j:5-community
     restart: unless-stopped
-    network_mode: service:neo4j-on-advin
     volumes:
       - neo4j-data:/data
       - neo4j-logs:/logs
@@ -16,12 +15,13 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      - vps-network
 
   graphiti:
     container_name: graphiti
     image: graphiti/graphiti:latest  # Adjust image name as needed
     restart: unless-stopped
-    network_mode: service:neo4j-on-advin
     depends_on:
       - neo4j
     env_file:
@@ -33,6 +33,8 @@ services:
       options:
         max-size: "5m"
         max-file: "2"
+    networks:
+      - vps-network
 
   neo4j-on-advin:
     image: tailscale/tailscale:latest
@@ -50,6 +52,8 @@ services:
     restart: unless-stopped
     secrets:
       - tsauthkey
+    networks:
+      - vps-network
 
 secrets:
   tsauthkey:
@@ -61,3 +65,8 @@ volumes:
   neo4j-import:
   neo4j-plugins:
   graphiti-data:
+
+networks:
+  vps-network:
+    name: vps-network
+    external: true

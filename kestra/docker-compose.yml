@@ -1,0 +1,103 @@
+volumes:
+  postgres-data:
+    driver: local
+  kestra-data:
+    driver: local
+
+services:
+  postgres:
+    image: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    networks:
+      - vps-network
+
+  redis:
+    image: redis
+    restart: always
+    networks:
+      - vps-network
+
+  kestra:
+    image: kestra/kestra:latest
+    pull_policy: always
+    # Note that this setup with a root user is intended for development purpose.
+    # Our base image runs without root, but the Docker Compose implementation needs root to access the Docker socket
+    user: "root"
+    command: server standalone
+    volumes:
+      - kestra-data:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/kestra-wd:/tmp/kestra-wd
+    environment:
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+            driverClassName: org.postgresql.Driver
+            username: ${POSTGRES_USER}
+            password: ${POSTGRES_PASSWORD}
+        kestra:
+          # server:
+          #   basicAuth:
+          #     username: admin@kestra.io # it must be a valid email address
+          #     password: Admin1234 # it must be at least 8 characters long with uppercase letter and a number
+          repository:
+            type: postgres
+          storage:
+            type: local
+            local:
+              basePath: "/app/storage"
+          queue:
+            type: redis
+            redis:
+              uri: redis://redis:6379/0
+          tasks:
+            tmpDir:
+              path: /tmp/kestra-wd/tmp
+          url: http://localhost:8080/
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+    networks:
+      - vps-network
+
+  kestra-on-advin:
+      image: tailscale/tailscale:latest
+      hostname: kestra-on-advin
+      environment:
+        - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
+        - TS_STATE_DIR=/var/lib/tailscale
+        - TS_USERSPACE=false
+      volumes:
+        - ${PWD}/tailscale-state:/var/lib/tailscale
+      devices:
+        - /dev/net/tun:/dev/net/tun
+      cap_add:
+        - net_admin
+      restart: unless-stopped
+      secrets:
+        - tsauthkey
+      networks:
+        - vps-network
+
+secrets:
+  tsauthkey:
+    file: ~/.config/tsauthkey
+
+networks:
+  vps-network:
+    name: vps-network
+    external: true

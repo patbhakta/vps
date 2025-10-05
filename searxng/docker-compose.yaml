@@ -3,7 +3,6 @@ services:
     container_name: searxng
     image: docker.io/searxng/searxng:latest
     restart: unless-stopped
-    network_mode: service:searxng-on-advin
     volumes:
       - ./config:/etc/searxng:ro
     env_file:
@@ -18,6 +17,8 @@ services:
       options:
         max-size: "1m"
         max-file: "1"
+    networks:
+      - vps-network
   
   searxng-on-advin:
     image: tailscale/tailscale:latest
@@ -35,8 +36,14 @@ services:
     restart: unless-stopped
     secrets:
       - tsauthkey
+    networks:
+      - vps-network
 
 secrets:
   tsauthkey:
     file: ~/.config/tsauthkey
 
+networks:
+  vps-network:
+    name: vps-network
+    external: true

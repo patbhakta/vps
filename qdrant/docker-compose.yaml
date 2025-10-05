@@ -3,7 +3,6 @@ services:
     container_name: qdrant
     image: qdrant/qdrant:latest
     restart: unless-stopped
-    network_mode: service:qdrant-on-advin
     volumes:
       - qdrant-storage:/qdrant/storage
       - qdrant-snapshots:/qdrant/snapshots
@@ -13,6 +12,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      - vps-network
 
   qdrant-on-advin:
     image: tailscale/tailscale:latest
@@ -30,6 +31,8 @@ services:
     restart: unless-stopped
     secrets:
       - tsauthkey
+    networks:
+      - vps-network
 
 secrets:
   tsauthkey:
@@ -38,3 +41,8 @@ secrets:
 volumes:
   qdrant-storage:
   qdrant-snapshots:
+
+networks:
+  vps-network:
+    name: vps-network
+    external: true

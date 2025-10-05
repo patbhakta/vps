@@ -7,12 +7,18 @@ services:
     env_file:
       - .env
     ports:
-      - 80:80
-      - 443:443
-      - 443:443/udp
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
     volumes:
       - ~/homelab/webpages:/webpages
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./data:/data
       - ./config:/config
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - vps-network
+
+networks:
+  vps-network:
+    name: vps-network
