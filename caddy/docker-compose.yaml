@@ -11,7 +11,7 @@ services:
       - 443:443
       - 443:443/udp
     volumes:
-      - ~/homelab/webpages:/webpages
+      - ~/vps/webpages:/webpages
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./data:/data
       - ./config:/config
