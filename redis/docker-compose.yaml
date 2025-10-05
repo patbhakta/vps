@@ -4,7 +4,6 @@ services:
     image: docker.io/valkey/valkey:8-alpine
     command: valkey-server --save 30 1 --loglevel warning
     restart: unless-stopped
-    network_mode: service:redis-on-advin
     volumes:
       - valkey-data2:/data
     logging:
@@ -12,6 +11,8 @@ services:
       options:
         max-size: "5m"
         max-file: "1"
+    networks:
+      - vps-network
   
   redis-on-advin:
     image: tailscale/tailscale:latest
@@ -29,6 +30,8 @@ services:
     restart: unless-stopped
     secrets:
       - tsauthkey
+    networks:
+      - vps-network
 
 secrets:
   tsauthkey:
@@ -36,3 +39,8 @@ secrets:
 
 volumes:
   valkey-data2:
+
+networks:
+  vps-network:
+    name: vps-network
+    external: true
