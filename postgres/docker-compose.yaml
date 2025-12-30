@@ -12,11 +12,11 @@ services:
       - ./postgres-data:/var/lib/postgresql/data
     env_file:
       - .env
-    network_mode: service:pg-on-advin
+    network_mode: service:pg-on-vps
 
-  pg-on-advin:
+  pg-on-vps:
     image: tailscale/tailscale:latest
-    hostname: pg-on-advin
+    hostname: pg-on-vps
     environment:
       - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
       - TS_STATE_DIR=/var/lib/tailscale
@@ -34,4 +34,3 @@ services:
 secrets:
   tsauthkey:
     file: ~/.config/tsauthkey
-

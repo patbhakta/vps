@@ -3,7 +3,7 @@ services:
     container_name: searxng
     image: docker.io/searxng/searxng:latest
     restart: unless-stopped
-    network_mode: service:searxng-on-advin
+    network_mode: service:searxng-on-vps
     volumes:
       - ./config:/etc/searxng:ro
     env_file:
@@ -18,10 +18,10 @@ services:
       options:
         max-size: "1m"
         max-file: "1"
-  
-  searxng-on-advin:
+
+  searxng-on-vps:
     image: tailscale/tailscale:latest
-    hostname: searxng-on-advin
+    hostname: searxng-on-vps
     environment:
       - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
       - TS_STATE_DIR=/var/lib/tailscale
@@ -39,4 +39,3 @@ services:
 secrets:
   tsauthkey:
     file: ~/.config/tsauthkey
-

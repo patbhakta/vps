@@ -2,36 +2,61 @@
     ocsp_stapling off
 }
 
-n8n.bhakta.us {
-	reverse_proxy n8n-on-advin:5678
+# n8n - Public access
+n8n.mydomain.com {
+	reverse_proxy n8n:5678
+	encode gzip
+	
+	log {
+		output file /data/logs/n8n_access.log {
+			roll_size 10mb
+			roll_keep 5
+			roll_keep_for 720h
+		}
+		format console
+	}
 }
 
-search.bhakta.us {
-    reverse_proxy searxng-on-advin:8080
-    tls {
-        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+# Kestra - Public access
+kestra.mydomain.com {
+	reverse_proxy kestra:8080
+	encode gzip
+	
+	log {
+		output file /data/logs/kestra_access.log {
+			roll_size 10mb
+			roll_keep 5
+			roll_keep_for 720h
+		}
+		format console
+	}
+}
+
+# Open Notebook LLM
+# notebook.mydomain.com {
+    # Proxy to the Next.js frontend (port 8502)
+    # The frontend will automatically handle proxying API requests to port 5055
+    # reverse_proxy /api/* open-notebook:5055
+#    reverse_proxy open-notebook:8502
+# }
+
+code.mydomain.com {
+    reverse_proxy code-server:8443
+	encode gzip
+
+	log {
+		output file /data/logs/code_access.log {
+			roll_size 10mb
+			roll_keep 5
+			roll_keep_for 720h
+		}
+		format console
     }
 }
 
-keep.bhakta.us {
-    reverse_proxy karakeep-on-advin:3000
-    tls {
-        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-    }
-}
-
-pages.bhakta.us {
-  tls {
-    dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-  }
-  header {
-    Access-Control-Allow-Origin *
-    Access-Control-Allow-Credentials true
-    Access-Control-Allow-Methods *
-    Access-Control-Allow-Headers *
-    defer
-  }
-
-  root * /webpages
-  file_server browse
-}
+# Example: Add more sites as needed
+# example.mydomain.com {
+#     root * /var/www/example
+#     file_server
+#     encode gzip
+# }

@@ -1,0 +1,58 @@
+# Open Notebook LLM - Privacy-focused AI research assistant
+services:
+  open-notebook:
+    container_name: open-notebook
+    image: lfnovo/open_notebook:v1-latest-single
+    restart: always
+    ports:
+      - "8502:8502" # Web UI
+      - "5055:5055" # API
+    env_file:
+      - .env
+    environment:
+      # API configuration - IMPORTANT: Set to your VPS domain/IP for remote access
+      - API_URL=https://notebook.mydomain.com
+      # Or for local-only access, use:
+      - INTERNAL_API_URL=http://localhost:5055
+
+      # SurrealDB configuration (embedded in single container)
+      - SURREAL_URL=ws://localhost:8000/rpc
+      - SURREAL_USER=root
+      - SURREAL_PASSWORD=${SURREAL_PASSWORD:-root}
+      - SURREAL_NAMESPACE=open_notebook
+      - SURREAL_DATABASE=production
+
+      # AI Provider API Keys - Add the ones you want to use
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY} - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      # Optional: Password protection
+      - PASSWORD=${NOTEBOOK_PASSWORD}
+    volumes:
+      - ./notebook-data:/app/data
+      - ./surreal-data:/mydata
+    networks:
+      - vps
+
+  notebooklm-on-vps:
+    image: tailscale/tailscale:latest
+    hostname: notebooklm-on-vps
+    ports:
+      - 5678:5678
+    environment:
+      - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+    volumes:
+      - ./tailscale-notebooklm/state:/var/lib/tailscale
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+    restart: unless-stopped
+    secrets:
+      - tsauthkey
+
+  secrets:
+    tsauthkey:
+      file: ~/.config/tsauthkey

@@ -14,16 +14,34 @@ This is a collection of docker-compose files for VPS.
 - watchtower
 - qdrant
 - neo4j / graphiti
+- supabase
+- kestra
+- pipecat
+- open notebooklm
 
-## Goals
+`apt update -y && apt upgrade -y`
 
-I want to have a VPS that is self-hosted and runs on docker. I want to be able to access all of the services from the internet. But I don't want to let anyone access them...just me. n8n will be publicly accessible, but require authentication. The main thing that allows for this is Tailscale, which has a free plan that will let us do all we need.
+`apt install curl -y`
 
-## Video
+`apt install docker.io -y`
 
-[![Zero to MCP](http://img.youtube.com/vi/OmWJPJ1CR7M/0.jpg)](http://www.youtube.com/watch?v=OmWJPJ1CR7M "Zero to MCP")
+`apt-get install -y ca-certificates curl gnupg`
 
-Run `git clone https://github.com/patbhakta/vps.git` to clone this repo. cd into the homelab directory and run `./prep.sh` to prepare the system. Optionally review prep.sh first to see what it does.
+`sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg`
+
+`echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null`
+
+`apt-get update`
+
+`apt-get upgrade`
+
+`apt-get install -y docker-compose-plugin`
+
+`reboot`
+
+Run `git clone https://github.com/patbhakta/vps.git` to clone this repo. cd into the vps directory and run `./prep.sh` to prepare the system. Review prep.sh first to see what it does and modify as needed.
 
 Prep.sh will ask for 3 things: 
 
@@ -31,20 +49,16 @@ Prep.sh will ask for 3 things:
 2. The password for that user
 3. The domain name you want to use (that you already own). For instance, I have tvl.st and want a n8n server to be reached at n.tvl.st, so here I enter tvl.st and press enter. 
 
-After running the script, you will need to log out. Before logging back in, let's edit your ssh config file to make it easier to connect. Think of the name you would like to use to connect. I use hstgr throughout the videos, so I will use that. If you don't have a config file, create one at `~/.ssh/config`. You want at least this entry:
+After running the script, you will need to log out. Before logging back in, let's edit your ssh config file to make it easier to connect. Think of the name you would like to use to connect. If you don't have a config file, create one at `~/.ssh/config`. You want at least this entry:
 
 ```
-Host hstgr
+Host vps
     HostName ipaddress
     User theusernameyoucreated
     IdentityFile ~/.ssh/thekeyyoucreatedintheinstall
 ```
 
-Save that. Then you can run `ssh hstgr` to connect to your server. 
-
-### Hostinger Firewall
-
-Now that you are in, lets go to the [Hostinger HPanel](https://hpanel.hostinger.com). Click **Manage** next to the VPS you created.  Under the panel with the stats for your VPS, click **Firewall**. Click the add firewall button and give it a name. Click the 3 dots and choose Edit. You want a rule that drops everything, then add a rule to accept HTTPS, and another to accept SSH. Set the source for all of them to be Any. Then make sure that firewall is enabled. 
+Save that. Then you can run `ssh vps` to connect to your server. 
 
 ## Tailscale
 
@@ -83,7 +97,7 @@ After its installed, you need a key to add your docker containers to the tailnet
 
 ## Caddy
 
-1. Navigate to the caddy directory: `cd ~/homelab/caddy`
+1. Navigate to the caddy directory: `cd ~/vps/caddy`
 2. prep.sh copied Caddyfile.example to Caddyfile and updated all the hostnames using your domain.
 3. Edit the .env file and add your Cloudflare API Token. If you are not using Cloudflare for your domain's DNS, you have some research to do.
 

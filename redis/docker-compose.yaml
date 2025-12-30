@@ -1,10 +1,10 @@
 services:
   redis:
     container_name: redis
-    image: docker.io/valkey/valkey:8-alpine
+    image: docker.io/valkey/valkey:latest
     command: valkey-server --save 30 1 --loglevel warning
     restart: unless-stopped
-    network_mode: service:redis-on-advin
+    network_mode: service:redis-on-vps
     volumes:
       - valkey-data2:/data
     logging:
@@ -12,10 +12,10 @@ services:
       options:
         max-size: "5m"
         max-file: "1"
-  
-  redis-on-advin:
+
+  redis-on-vps:
     image: tailscale/tailscale:latest
-    hostname: redis-on-advin
+    hostname: redis-on-vps
     environment:
       - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
       - TS_STATE_DIR=/var/lib/tailscale

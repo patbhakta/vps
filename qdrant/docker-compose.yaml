@@ -3,7 +3,7 @@ services:
     container_name: qdrant
     image: qdrant/qdrant:latest
     restart: unless-stopped
-    network_mode: service:qdrant-on-advin
+    network_mode: service:qdrant-on-vps
     volumes:
       - qdrant-storage:/qdrant/storage
       - qdrant-snapshots:/qdrant/snapshots
@@ -14,9 +14,9 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  qdrant-on-advin:
+  qdrant-on-vps:
     image: tailscale/tailscale:latest
-    hostname: qdrant-on-advin
+    hostname: qdrant-on-vps
     environment:
       - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
       - TS_STATE_DIR=/var/lib/tailscale

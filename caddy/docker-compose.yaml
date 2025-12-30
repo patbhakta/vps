@@ -11,8 +11,9 @@ services:
       - 443:443
       - 443:443/udp
     volumes:
-      - ~/vps/webpages:/webpages
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./data:/data
-      - ./config:/config
+      - ./caddy-data:/data
+      - ./caddy-config:/config
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - vps

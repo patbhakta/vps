@@ -3,7 +3,7 @@ services:
     container_name: pipecat
     image: pipecat/pipecat:latest
     restart: unless-stopped
-    network_mode: service:pipecat-on-advin
+    network_mode: service:pipecat-on-vps
     env_file:
       - .env
     volumes:
@@ -17,9 +17,9 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  pipecat-on-advin:
+  pipecat-on-vps:
     image: tailscale/tailscale:latest
-    hostname: pipecat-on-advin
+    hostname: pipecat-on-vps
     environment:
       - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
       - TS_STATE_DIR=/var/lib/tailscale

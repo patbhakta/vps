@@ -10,7 +10,7 @@ services:
       MEILI_ADDR: http://meilisearch:7700
       BROWSER_WEB_URL: http://chrome:9222
       DATA_DIR: /data
-    network_mode: service:karakeep-on-advin
+    network_mode: service:karakeep-on-vps
   chrome:
     image: gcr.io/zenika-hub/alpine-chrome:124
     restart: unless-stopped
@@ -49,6 +49,7 @@ services:
 volumes:
   meilisearch:
   data:
+
 
 secrets:
   tsauthkey:
