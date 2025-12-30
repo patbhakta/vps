@@ -20,6 +20,9 @@ services:
   pipecat-on-vps:
     image: tailscale/tailscale:latest
     hostname: pipecat-on-vps
+    ports:
+      - "8080:8080"
+      - "9090:9090"
     environment:
       - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
       - TS_STATE_DIR=/var/lib/tailscale
@@ -36,7 +39,7 @@ services:
 
 secrets:
   tsauthkey:
-    file: ~/.config/tsauthkey
+    file: ~/vps/.config/tsauthkey
 
 volumes:
   pipecat-data:

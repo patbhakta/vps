@@ -1,3 +1,7 @@
+networks:
+  vps:
+    external: true
+
 services:
   web:
     image: ghcr.io/karakeep-app/karakeep:${KARAKEEP_VERSION:-release}
@@ -7,13 +11,14 @@ services:
     env_file:
       - .env
     environment:
-      MEILI_ADDR: http://meilisearch:7700
-      BROWSER_WEB_URL: http://chrome:9222
+      MEILI_ADDR: http://localhost:7700
+      BROWSER_WEB_URL: http://localhost:9222
       DATA_DIR: /data
     network_mode: service:karakeep-on-vps
   chrome:
     image: gcr.io/zenika-hub/alpine-chrome:124
     restart: unless-stopped
+    network_mode: service:karakeep-on-vps
     command:
       - --no-sandbox
       - --disable-gpu
@@ -24,15 +29,18 @@ services:
   meilisearch:
     image: getmeili/meilisearch:v1.13.3
     restart: unless-stopped
+    network_mode: service:karakeep-on-vps
     env_file:
       - .env
     environment:
       MEILI_NO_ANALYTICS: "true"
     volumes:
       - meilisearch:/meili_data
-  karakeep-on-advin:
+  karakeep-on-vps:
     image: tailscale/tailscale:latest
-    hostname: karakeep-on-advin
+    hostname: karakeep-on-vps
+    ports:
+      - "3000:3000"
     environment:
       - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
       - TS_STATE_DIR=/var/lib/tailscale
@@ -46,6 +54,8 @@ services:
     restart: unless-stopped
     secrets:
       - tsauthkey
+    networks:
+      - vps
 volumes:
   meilisearch:
   data:
@@ -53,4 +63,4 @@ volumes:
 
 secrets:
   tsauthkey:
-    file: ~/.config/tsauthkey
+    file: ~/vps/.config/tsauthkey

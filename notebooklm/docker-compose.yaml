@@ -1,12 +1,14 @@
 # Open Notebook LLM - Privacy-focused AI research assistant
+networks:
+  vps:
+    external: true
+
 services:
   open-notebook:
     container_name: open-notebook
     image: lfnovo/open_notebook:v1-latest-single
     restart: always
-    ports:
-      - "8502:8502" # Web UI
-      - "5055:5055" # API
+    # Ports moved to sidecar
     env_file:
       - .env
     environment:
@@ -31,14 +33,14 @@ services:
     volumes:
       - ./notebook-data:/app/data
       - ./surreal-data:/mydata
-    networks:
-      - vps
+    network_mode: service:notebooklm-on-vps
 
   notebooklm-on-vps:
     image: tailscale/tailscale:latest
     hostname: notebooklm-on-vps
     ports:
-      - 5678:5678
+      - "8502:8502"
+      - "5055:5055"
     environment:
       - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
       - TS_STATE_DIR=/var/lib/tailscale
@@ -53,6 +55,9 @@ services:
     secrets:
       - tsauthkey
 
-  secrets:
-    tsauthkey:
-      file: ~/.config/tsauthkey
+    networks:
+      - vps
+
+secrets:
+  tsauthkey:
+    file: ~/vps/.config/tsauthkey

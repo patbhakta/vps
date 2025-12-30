@@ -1,3 +1,7 @@
+networks:
+  vps:
+    external: true
+
 services:
   qdrant:
     container_name: qdrant
@@ -17,6 +21,9 @@ services:
   qdrant-on-vps:
     image: tailscale/tailscale:latest
     hostname: qdrant-on-vps
+    ports:
+      - "6333:6333"
+      - "6334:6334"
     environment:
       - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
       - TS_STATE_DIR=/var/lib/tailscale
@@ -30,10 +37,12 @@ services:
     restart: unless-stopped
     secrets:
       - tsauthkey
+    networks:
+      - vps
 
 secrets:
   tsauthkey:
-    file: ~/.config/tsauthkey
+    file: ~/vps/.config/tsauthkey
 
 volumes:
   qdrant-storage:

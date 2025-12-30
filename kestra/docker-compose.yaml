@@ -1,3 +1,7 @@
+networks:
+  vps:
+    external: true
+
 services:
   kestra:
     container_name: kestra
@@ -7,20 +11,17 @@ services:
     # Our base image runs without root, but the Docker Compose implementation needs root to access the Docker socket
     user: "root"
     command: server standalone
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    pull_policy: always
+    stop_grace_period: 6m
     volumes:
-      - kestra-data:/app/storage
+      - ~/vps/kestra/kestra-data:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/kestra-wd:/tmp/kestra-wd
     environment:
       KESTRA_CONFIGURATION: |
         datasources:
           postgres:
-            url: jdbc:postgresql://postgres:5432/kestra
+            url: jdbc:postgresql://pg-on-vps:5432/kestra
             driverClassName: org.postgresql.Driver
             username: ${POSTGRES_USER}
             password: ${POSTGRES_PASSWORD}
@@ -32,22 +33,22 @@ services:
             local:
               basePath: "/app/storage"
           queue:
-            type: redis
+            type: postgres
           tasks:
             tmpDir:
               path: /tmp/kestra-wd/tmp
           server:
             access-log:
               enabled: false
-    expose:
-      - "8080"
-      - "8081"
-    networks:
-      - vps
+          url: https://kestra.bhakta.us/
+    network_mode: service:kestra-on-vps
 
   kestra-on-vps:
     image: tailscale/tailscale:latest
     hostname: kestra-on-vps
+    ports:
+      - "8080:8080"
+      - "8081:8081"
     environment:
       - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
       - TS_STATE_DIR=/var/lib/tailscale
@@ -61,7 +62,9 @@ services:
     restart: unless-stopped
     secrets:
       - tsauthkey
+    networks:
+      - vps
 
 secrets:
   tsauthkey:
-    file: ~/.config/tsauthkey
+    file: ~/vps/.config/tsauthkey

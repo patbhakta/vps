@@ -1,3 +1,9 @@
+networks:
+  vps:
+    external: true
+  default:
+
+
 services:
   # Supabase Studio
   studio:
@@ -34,7 +40,7 @@ services:
     container_name: supabase-auth
     image: supabase/gotrue:v2.132.3
     restart: unless-stopped
-    network_mode: service:supabase-on-vps
+    # network_mode: service:supabase-on-vps
     depends_on:
       db:
         condition: service_healthy
@@ -51,7 +57,7 @@ services:
     container_name: supabase-rest
     image: postgrest/postgrest:v11.2.2
     restart: unless-stopped
-    network_mode: service:supabase-on-vps
+    # network_mode: service:supabase-on-vps
     depends_on:
       db:
         condition: service_healthy
@@ -68,7 +74,7 @@ services:
     container_name: supabase-realtime
     image: supabase/realtime:v2.25.50
     restart: unless-stopped
-    network_mode: service:supabase-on-vps
+    # network_mode: service:supabase-on-vps
     depends_on:
       db:
         condition: service_healthy
@@ -85,7 +91,7 @@ services:
     container_name: supabase-storage
     image: supabase/storage-api:v0.43.11
     restart: unless-stopped
-    network_mode: service:supabase-on-vps
+    # network_mode: service:supabase-on-vps
     depends_on:
       db:
         condition: service_healthy
@@ -104,7 +110,7 @@ services:
     container_name: supabase-imgproxy
     image: darthsim/imgproxy:v3.8.0
     restart: unless-stopped
-    network_mode: service:supabase-on-vps
+    # network_mode: service:supabase-on-vps
     env_file:
       - .env
     logging:
@@ -118,7 +124,7 @@ services:
     container_name: supabase-meta
     image: supabase/postgres-meta:v0.75.0
     restart: unless-stopped
-    network_mode: service:supabase-on-vps
+    # network_mode: service:supabase-on-vps
     depends_on:
       db:
         condition: service_healthy
@@ -135,7 +141,7 @@ services:
     container_name: supabase-edge-functions
     image: supabase/edge-runtime:v1.32.3
     restart: unless-stopped
-    network_mode: service:supabase-on-vps
+    # network_mode: service:supabase-on-vps
     env_file:
       - .env
     volumes:
@@ -151,7 +157,7 @@ services:
     container_name: supabase-analytics
     image: supabase/logflare:1.4.0
     restart: unless-stopped
-    network_mode: service:supabase-on-vps
+    # network_mode: service:supabase-on-vps
     depends_on:
       db:
         condition: service_healthy
@@ -168,7 +174,7 @@ services:
     container_name: supabase-vector
     image: timberio/vector:0.28.1-alpine
     restart: unless-stopped
-    network_mode: service:supabase-on-vps
+    # network_mode: service:supabase-on-vps
     volumes:
       - ./volumes/logs/vector.yml:/etc/vector/vector.yml:ro
       - logs:/var/log
@@ -183,7 +189,7 @@ services:
     container_name: supabase-db
     image: supabase/postgres:15.1.0.117
     restart: unless-stopped
-    network_mode: service:supabase-on-vps
+    # network_mode: service:supabase-on-vps
     env_file:
       - .env
     volumes:
@@ -206,6 +212,11 @@ services:
   supabase-on-vps:
     image: tailscale/tailscale:latest
     hostname: supabase-on-vps
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "3000:3000"
+      - "5432:5432"
     environment:
       - TS_EXTRA_ARGS=--auth-key file:/run/secrets/tsauthkey
       - TS_STATE_DIR=/var/lib/tailscale
@@ -219,10 +230,13 @@ services:
     restart: unless-stopped
     secrets:
       - tsauthkey
+    networks:
+      - vps
+      - default
 
 secrets:
   tsauthkey:
-    file: ~/.config/tsauthkey
+    file: ~/vps/.config/tsauthkey
 
 volumes:
   db-data:

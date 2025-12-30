@@ -4,7 +4,7 @@
 
 # n8n - Public access
 n8n.mydomain.com {
-	reverse_proxy n8n:5678
+	reverse_proxy n8n-on-vps:5678
 	encode gzip
 	
 	log {
@@ -51,6 +51,20 @@ code.mydomain.com {
 			roll_keep_for 720h
 		}
 		format console
+    }
+}
+
+search.mydomain.com {
+    reverse_proxy searxng-on-vps:8080
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+    }
+}
+
+karakeep.mydomain.com {
+    reverse_proxy karakeep-on-vps:3000
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
     }
 }
 
