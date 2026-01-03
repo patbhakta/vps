@@ -1,0 +1,52 @@
+id: sec-edgar-harvest
+namespace: us.bhakta.investment
+
+description: |
+  Tool: SEC Filings Harvester.
+  Pulls 10-K/10-Q filings for any ticker and prepares them for TrustGraph.
+
+inputs:
+  - id: ticker
+    type: STRING
+    defaults: "NVDA"
+    description: "Stock ticker to harvest"
+
+  - id: filing_type
+    type: SELECT
+    values: ["10-K", "10-Q", "8-K"]
+    defaults: "10-K"
+
+tasks:
+  - id: download_filing
+    type: io.kestra.plugin.scripts.python.Script
+    taskRunner:
+      type: io.kestra.plugin.scripts.python.Docker
+    containerImage: python:3.11-slim
+    beforeCommands:
+      - pip install sec-edgar-downloader
+    script: |
+      import os
+      from sec_edgar_downloader import Downloader
+      
+      # Using a dummy email for SEC compliance requirements
+      dl = Downloader("InvestmentLab", "research@bhakta.us")
+      
+      # Download latest filing
+      dl.get("{{ inputs.filing_type }}", "{{ inputs.ticker }}", limit=1, download_details=True)
+      
+      print(f"Successfully downloaded {{ inputs.filing_type }} for {{ inputs.ticker }}")
+      
+      # List files for output
+      for root, dirs, files in os.walk("sec-edgar-filings"):
+          for name in files:
+              print(f"Path: {os.path.join(root, name)}")
+
+  - id: log_status
+    type: io.kestra.plugin.core.log.Log
+    message: "Harvester complete for {{ inputs.ticker }}. Ready to push to TrustGraph."
+
+triggers:
+  - id: manual
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 9 * * 1-5" # Run every weekday at 9am (Optional)
+    enabled: false
